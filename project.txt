@@ -1,0 +1,110 @@
+select * from project.dbo.Data1;
+select * from project.dbo.Data2;
+
+--number of rows in the data set
+
+
+select count(*)from project.dbo.Data1;
+select count(*)from project.dbo.Data2;
+
+-- for bihar and jharkhand and rajasthan in asc order
+
+;
+select * from project..Data1 where state in ('bihar','jharkhand','rajasthan') order by state;
+
+-- total population
+
+
+select sum(population) as population from project..Data2
+
+
+-- total average population 
+
+
+select avg(population) as avg_population from project..Data2
+
+
+--avg growth percentage with state
+
+
+select state,avg(growth)*100 AVG_GROWTH from project..Data1 group by state;
+
+--avg sex ration
+
+
+select state,round(avg(Sex_Ratio),0) as avg_sex_ratio from project..Data1 group by state;
+
+--avg literacy rate for only those state which are having 70% above literacy rate
+
+
+select state,round(avg(literacy),0) as avg_literacy from project..Data1
+group by state having round(avg(literacy),0)>70 order by avg_literacy desc
+
+-- top 3 states showing highest growth ratio
+
+
+select top 3 state,avg(growth)*100 as top_3_states from project..Data1 group by state order by state desc;
+
+
+---- top 3 states showing lowest growth ratio
+
+
+select top 3 state,avg(growth)*100 as bottom_3_states from project..Data1 group by state order by state;
+
+--top 3 states showing highest sex ratio
+
+
+select top 3 state,round(avg(Sex_Ratio),0) as avg_sex_ratio from project..Data1 group by state order by avg_sex_ratio desc;
+
+-- top 3  states showing lowest sex ratio
+
+
+select top 3 state,round(avg(Sex_Ratio),0) as avg_sex_ratio from project..Data1 group by state order by avg_sex_ratio ;
+
+--states starting with letter 'r'
+
+
+select *from project..Data1 where lower(state) like 'r%'
+
+-- states ending with letter 'a'
+
+
+select *from project..Data1 where lower(state) like '%a'
+
+-- states starting with letter 'h' and ending with letter 'a'
+
+
+select *from project..Data1 where lower(state) like 'h%' and lower(state) like '%a'
+
+--joining the tables
+
+
+select a1.District,a1.state,a1.sex_ratio,b.Population from project..Data1 a1 inner join project..Data2 b on a1.District=b.district
+
+
+
+-- calculate the number of male and females( by formula)
+
+
+select d.state,sum (d.males)as total_males,sum(d.females) as total_females from 
+(select c.district,c.state,round(c.population/(sex_ratio+1),0) males ,round((c.population*c.sex_ratio)/(c.sex_ratio+1),0) females from 
+(select a1.District,a1.state,a1.sex_ratio/1000 sex_ratio,b.Population from project..Data1 a1 inner join project..Data2 b on a1.District=b.district)c)d
+group by d.state
+
+
+-- total literacy rate (by formula)
+
+
+select d.state,sum(d.literate_people),sum(d.illiterate_people) from
+(select c.state,c.district,round(c.literacy_ratio*c.population,0) literate_people,round((1-c.literacy_ratio)*c.population,0) illiterate_people from
+(select a1.District,a1.state,a1.Literacy/100 as literacy_ratio,b.Population from project..Data1 a1 inner join project..Data2 b on a1.District=b.district)c)d
+group by d.state
+
+
+-- window functions!!!!!!!!!!!!
+-- show top 3 districts with highest literacy rate..
+
+
+select a.*from
+(select district ,state,literacy,rank() over (partition by state order by literacy desc) rnkk from project..Data1)a
+where a.rnkk in (1,2,3) order by state
